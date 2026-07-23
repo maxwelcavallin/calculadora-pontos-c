@@ -6,6 +6,62 @@ import Image from "next/image"
 import { pushToDataLayer } from "@/lib/tracking"
 import { testimonials } from "@/lib/testimonials-data"
 
+/** Contador animado ao entrar na tela — replicado do app Viagente (12,8%) */
+function useCountUp(target: number, duration = 1200, decimals = 0) {
+  const [value, setValue] = useState(0)
+  const ref = useRef<HTMLDivElement | null>(null)
+  const hasAnimated = useRef(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true
+          let start: number | null = null
+          const step = (timestamp: number) => {
+            if (!start) start = timestamp
+            const elapsed = timestamp - start
+            const t = Math.min(elapsed / duration, 1)
+            const eased = 1 - Math.pow(1 - t, 3)
+            setValue(parseFloat((eased * target).toFixed(decimals)))
+            if (t < 1) requestAnimationFrame(step)
+            else setValue(target)
+          }
+          requestAnimationFrame(step)
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [target, duration, decimals])
+
+  return { value, ref }
+}
+
+/** Pulso de glow roxo ao entrar na seção na tela — replicado do app Viagente */
+function useSectionGlow() {
+  const ref = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          el.classList.add("glow-active")
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return ref
+}
+
 const CalculadoraQuiz = dynamic(() => import("@/components/calculadora-quiz"), {
   ssr: false,
   loading: () => null,
@@ -52,6 +108,114 @@ function Reveal({
     >
       {children}
     </div>
+  )
+}
+
+/**
+ * Seção "12,8%" — réplica exata (efeitos, gradientes, animação) da PainStatSection
+ * da Página B, com copy adaptada para quem já tem pontos parados.
+ */
+function PainStatSection() {
+  const sectionRef = useSectionGlow()
+  const { value, ref: countRef } = useCountUp(12.8, 1400, 1)
+  const displayValue = value.toFixed(1).replace(".", ",")
+
+  return (
+    <section
+      ref={sectionRef as React.RefObject<HTMLElement>}
+      className="section-glow-trigger relative overflow-hidden flex flex-col justify-center px-6"
+      style={{ background: "#0A0A0C", minHeight: "100svh" }}
+      aria-label="Estatística sobre resgate de milhas"
+    >
+      <div
+        aria-hidden="true"
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "600px",
+          height: "600px",
+          border: "1px solid rgba(113,105,221,0.06)",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "900px",
+          height: "900px",
+          border: "1px solid rgba(113,105,221,0.03)",
+        }}
+      />
+
+      <div className="relative z-10 max-w-2xl mx-auto text-center">
+        <div ref={countRef}>
+          <p
+            className="font-bold"
+            style={{
+              fontFamily: "var(--font-space-grotesk), sans-serif",
+              fontSize: "clamp(64px, 20vw, 160px)",
+              background: "linear-gradient(135deg, #7169DD 0%, #A8A3E8 50%, #E59501 100%)",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+              margin: 0,
+              lineHeight: 1,
+              letterSpacing: "-0.04em",
+            }}
+          >
+            {displayValue}%
+          </p>
+        </div>
+
+        <Reveal delay={100}>
+          <p
+            className="font-medium mx-auto"
+            style={{
+              fontSize: "clamp(17px, 2.5vw, 22px)",
+              color: "rgba(248,249,252,0.75)",
+              lineHeight: 1.6,
+              margin: "28px auto 0",
+              maxWidth: "520px",
+            }}
+          >
+            dos brasileiros resgatam seus pontos em passagens aéreas.
+          </p>
+        </Reveal>
+
+        <Reveal delay={200}>
+          <p
+            className="font-bold mx-auto"
+            style={{
+              fontFamily: "var(--font-space-grotesk), sans-serif",
+              fontSize: "clamp(20px, 3vw, 28px)",
+              color: "#F8F9FC",
+              margin: "20px auto 0",
+              maxWidth: "540px",
+              lineHeight: 1.35,
+            }}
+          >
+            Você já acumula pontos. A pergunta é:{" "}
+            <span
+              style={{
+                background: "linear-gradient(90deg, #E59501, #986300)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              ELES VIRAM VIAGEM OU FICAM PARADOS?
+            </span>
+          </p>
+        </Reveal>
+      </div>
+
+      <hr className="glow-divider" style={{ marginTop: "80px" }} />
+    </section>
   )
 }
 
@@ -107,6 +271,9 @@ export default function HomeClient() {
         </div>
       </section>
 
+      {/* ---------- PAIN STAT — 12,8% (réplica da Página B) ---------- */}
+      <PainStatSection />
+
       {/* ---------- COMO FUNCIONA ---------- */}
       <section className="relative px-6 py-24 glow-secao">
         <div className="max-w-4xl mx-auto">
@@ -154,7 +321,7 @@ export default function HomeClient() {
         </div>
       </section>
 
-      {/* ---------- PATRIMÔNIO PARADO ---------- */}
+      {/* ---------- VOCÊ JÁ ACUMULA (equivalente a "chegou até aqui" da Página B) ---------- */}
       <section className="relative px-6 py-24 glow-secao">
         <div className="max-w-3xl mx-auto text-center">
           <Reveal>
@@ -168,7 +335,7 @@ export default function HomeClient() {
 
           <Reveal delay={60}>
             <p className="mt-4 text-sm font-light uppercase" style={{ letterSpacing: "2px", color: "var(--text-muted)" }}>
-              Você já acumula. A pergunta é outra
+              Você chegou até aqui
             </p>
           </Reveal>
 
@@ -193,35 +360,34 @@ export default function HomeClient() {
             <div className="divisor-dourado mx-auto mt-8" />
           </Reveal>
 
-          <Reveal delay={280}>
-            <div className="card max-w-md mx-auto text-left">
-              <p className="text-sm font-light leading-relaxed" style={{ color: "var(--text-70)" }}>
-                Usamos a mesma referência de valor que aplicamos nas cotações reais dos nossos clientes, não uma média
-                genérica de internet.
-              </p>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12 max-w-md mx-auto">
+            {[
+              { valor: "R$ 76 mil+", label: "em economia registrada no portal dos clientes" },
+              { valor: "61 emissões", label: "com economia comprovada, dados reais" },
+            ].map((stat, i) => (
+              <Reveal key={stat.valor} delay={280 + i * 100}>
+                <div className="card h-full text-center">
+                  <p className="text-3xl md:text-4xl font-semibold text-gold-gradient mb-2">{stat.valor}</p>
+                  <p className="text-xs font-light" style={{ color: "var(--text-70)" }}>
+                    {stat.label}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
 
-      {/* ---------- PROVA AGREGADA ---------- */}
-      <section className="relative px-6 py-24">
-        <div className="max-w-3xl mx-auto text-center">
-          <Reveal>
+          <Reveal delay={560}>
             <p
-              className="font-bold"
-              style={{
-                fontFamily: "var(--font-space-grotesk), sans-serif",
-                fontSize: "clamp(40px, 9vw, 72px)",
-                color: "var(--text)",
-              }}
+              className="font-light mt-14"
+              style={{ fontSize: "clamp(20px, 3vw, 26px)", color: "var(--text)", letterSpacing: "0.4px" }}
             >
-              <span className="text-gold-gradient">R$ 76 mil+</span>
+              Seus pontos já valem alguma coisa hoje. A pergunta é quanto.
             </p>
           </Reveal>
-          <Reveal delay={100}>
-            <p className="text-sm md:text-base font-light" style={{ color: "var(--text-70)" }}>
-              em economia registrada no portal dos nossos clientes, em 61 emissões.
+
+          <Reveal delay={620}>
+            <p className="text-sm font-light mt-4" style={{ color: "var(--text-muted)" }}>
+              A calculadora é o primeiro passo. Gratuita. Sem compromisso.
             </p>
           </Reveal>
         </div>

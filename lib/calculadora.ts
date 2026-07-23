@@ -30,29 +30,34 @@ export interface CalculadoraResult {
 
 /**
  * ======================================================================
- * TABELAS DE REFERÊNCIA — validadas em 2026-07-23
+ * TABELAS DE REFERÊNCIA — validadas em 2026-07-24
  * ======================================================================
- * Valor por 1.000 pontos: R$ 20, único para todos os programas — mesma
- * referência já usada em produção na Página A (v0-diagnostico-de-viagens/
- * lib/diagnostico.ts). Não existe hoje uma quebra de valor por programa
- * (Livelo/Latam Pass/Smiles/Esfera/TudoAzul); se o time decidir diferenciar
- * no futuro, substituir a constante abaixo por um Record<Programa, number>.
+ * Valor por 1.000 pontos: quebra por programa, confirmada pelo time (a
+ * referência única de R$ 20 da Página A vira o piso do Smiles/TudoAzul,
+ * não mais um valor único para todos os programas):
+ *   Livelo R$ 40 · Latam Pass R$ 28 · Smiles R$ 20 · Esfera R$ 40 · TudoAzul R$ 20
  *
  * Limiares de faixa de destino: adaptados dos 8 tiers reais já usados na
  * calculadora de milhas do site institucional (v0-blue-sky-website-design/
  * lib/calculator.ts), agrupados nos 3 buckets do briefing da Página C:
- *   - Internacional Econômica = união dos tiers 50k/70k/100k-140k (todos
+ *   - Internacional Econômica = união dos tiers 24k/70k/100k-140k (todos
  *     rotulados "Econômica" na fonte)
  *   - Internacional Executiva = a partir de 140k, onde a fonte passa a
  *     misturar Econômica/Executiva
  * O limiar de "Nacional" não existe na fonte (o menor tier de lá já começa
- * em 50k, como internacional econômica) — não há piso mínimo de pontos
+ * em 24k, como internacional econômica) — não há piso mínimo de pontos
  * para Nacional porque ela nunca é ocultada, é sempre a faixa-base.
  * ======================================================================
  */
 
-// Valor em reais por 1.000 pontos — único para todos os programas.
-const VALOR_POR_MIL_PONTOS = 20
+// Valor em reais por 1.000 pontos — quebra por programa.
+const VALOR_POR_MIL_PONTOS: Record<Programa, number> = {
+  livelo: 40,
+  latamPass: 28,
+  smiles: 20,
+  esfera: 40,
+  tudoAzul: 20,
+}
 
 // Pontos mínimos (somando todos os programas informados) para sustentar
 // cada faixa de viagem. Nacional é sempre a base — nunca é preciso
@@ -87,8 +92,14 @@ export function algumProgramaPreenchido(pontos: PontosPorPrograma): boolean {
   return Object.values(pontos).some((v) => v > 0)
 }
 
+/** Soma o valor em reais de cada programa individualmente — nunca uma média única entre programas. */
 function calcularValorReais(pontos: PontosPorPrograma): number {
-  const total = (totalPontos(pontos) / 1000) * VALOR_POR_MIL_PONTOS
+  let total = 0
+  for (const programa of Object.keys(pontos) as Programa[]) {
+    const qtd = pontos[programa]
+    if (!qtd || qtd <= 0) continue
+    total += (qtd / 1000) * VALOR_POR_MIL_PONTOS[programa]
+  }
   return Math.round(total / 10) * 10
 }
 
