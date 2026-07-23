@@ -362,8 +362,8 @@ export default function HomeClient() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12 max-w-md mx-auto">
             {[
-              { valor: "R$ 76 mil+", label: "em economia registrada no portal dos clientes" },
-              { valor: "61 emissões", label: "com economia comprovada, dados reais" },
+              { valor: "1,4x", label: "multiplicador médio do investimento" },
+              { valor: "Risco Zero", label: "garantia contratual" },
             ].map((stat, i) => (
               <Reveal key={stat.valor} delay={280 + i * 100}>
                 <div className="card h-full text-center">
@@ -388,24 +388,6 @@ export default function HomeClient() {
           <Reveal delay={620}>
             <p className="text-sm font-light mt-4" style={{ color: "var(--text-muted)" }}>
               A calculadora é o primeiro passo. Gratuita. Sem compromisso.
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ---------- SEGURANÇA DE DADOS ---------- */}
-      <section className="relative px-6 py-24 glow-secao">
-        <div className="max-w-2xl mx-auto text-center">
-          <Reveal>
-            <h2 className="font-light mb-4" style={{ fontSize: "clamp(24px, 3.5vw, 32px)", letterSpacing: "0.6px" }}>
-              Suas senhas nunca passam por aqui.
-            </h2>
-          </Reveal>
-          <Reveal delay={100}>
-            <p className="text-sm font-light leading-relaxed" style={{ color: "var(--text-70)" }}>
-              Nunca pedimos senha de banco ou de cartão. Emissões com milhas só acontecem com você na tela,
-              compartilhando o próprio computador, e todo resgate exige o reconhecimento facial do titular na
-              companhia aérea.
             </p>
           </Reveal>
         </div>
